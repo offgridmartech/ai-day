@@ -41,7 +41,7 @@ AGENT_DESCRIPTION= Exemplo de descrição de agente de IA.
 # PERGUNTA INICIAL DA IA
 ASSISTANT_INITIAL_MESSAGE=Olá, como posso te ajudar hoje?
 
-```env
+```
 
 ## Limitações
 
