@@ -19,23 +19,29 @@ Para executar o projeto, basta preencher o arquivo `.env` com as informações d
 
 ### Exemplo de Conteúdo do Arquivo `.env`
 
-Abra o arquivo `.env` e preencha os campos conforme o exemplo abaixo:
+Abra o arquivo `.env.example` e preencha os campos conforme o exemplo abaixo:
 
 ```env
-# URL da API do LangFlow
-LANGFLOW_API_URL=https://sua-api-langflow.com/api/v1
 
-# Token de autenticação da API
-LANGFLOW_API_TOKEN=seu_token_api_aqui
+# Corpo da solicitação à API do Langflow (alteração é opcional)
+DATA_JSON={"input_value": "", "output_type": "chat", "input_type": "chat"}
 
-# Dados do agente (em formato JSON)
-LANGFLOW_API_DATA={"input_value": "message", "output_type": "chat", "input_type": "chat"}
+# URL da sua API
+API_URL=<URL_DA_API>
 
-# Título do agente (exibido no Streamlit)
-AI_AGENT_TITLE=Meu Agente LangFlow
+# TOKEN DE ACESSO À API DO LANGFLOW
+API_TOKEN=<TOKEN_DA_API>
 
-# Descrição do agente (exibida no Streamlit)
-AI_AGENT_DESCRIPTION="Este é um exemplo de agente desenvolvido no LangFlow."
+# TÍTULO CRIATIVO DO SEU AGENTE DE ia
+AGENT_TITLE=🔎Meu agente de IA
+
+# DESCRIÇÃO DO SEU AGENTE DE IA
+AGENT_DESCRIPTION= Exemplo de descrição de agente de IA.
+
+# PERGUNTA INICIAL DA IA
+ASSISTANT_INITIAL_MESSAGE=Olá, como posso te ajudar hoje?
+
+```
 
 ## Limitações
 
