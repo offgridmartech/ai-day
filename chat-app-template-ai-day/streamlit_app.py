@@ -1,73 +1,70 @@
 import streamlit as st
 import requests
-from dotenv import load_dotenv
 import os
-import json
+from dotenv import load_dotenv
 
 # Carregar variáveis de ambiente do arquivo .env
 load_dotenv()
+data_env = os.getenv("DATA_JSON")
+api_url = os.getenv("API_URL")
+token = os.getenv("API_TOKEN")
+agent_title = os.getenv("AGENT_TITLE")
+agent_description = os.getenv("AGENT_DESCRIPTION")
+assistant_message = os.getenv("ASSISTANT_INITIAL_MESSAGE")
 
-# Obter valores das variáveis de ambiente
-API_URL = os.getenv("LANGFLOW_API_URL")
-API_TOKEN = os.getenv("LANGFLOW_API_TOKEN")
-API_DATA = os.getenv("LANGFLOW_API_DATA")
-AI_AGENT_TITLE = os.getenv("AI_AGENT_TITLE")
-AI_AGENT_DESCRIPTION = os.getenv("AI_AGENT_DESCRIPTION")
-
-# Verificar se as variáveis de ambiente foram configuradas corretamente
-if not API_URL or not API_TOKEN or not API_DATA:
-    st.error("Variáveis de ambiente LANGFLOW_API_URL, LANGFLOW_API_TOKEN e LANGFLOW_API_DATA não configuradas.")
+if not data_env or not api_url or not token or not agent_title or not agent_description:
+    st.error("Erro: Uma ou mais variáveis de ambiente necessárias não foram encontradas.")
     st.stop()
 
-# Converter API_DATA de string para dicionário
-try:
-    API_DATA = json.loads(API_DATA)
-except json.JSONDecodeError:
-    st.error("O formato do JSON em LANGFLOW_API_DATA é inválido.")
-    st.stop()
+data_template = eval(data_env)  # Converte o JSON armazenado na variável para um dicionário Python
 
-# Usar as variáveis de ambiente no título e na descrição
-st.title(AI_AGENT_TITLE)
+st.title(agent_title)
 
-st.markdown(AI_AGENT_DESCRIPTION)
+st.markdown(agent_description)
 
-# Inicializar o estado da sessão para armazenar o histórico de conversas
+# Initialize session state for storing chat history
 if "messages" not in st.session_state:
-    st.session_state["messages"] = [{"role": "assistant", "content": "Olá! Como posso ajudar com seus documentos hoje?"}]
+    st.session_state["messages"] = [{"role": "assistant", "content": assistant_message}]
 
-# Exibir mensagens de chat do histórico da sessão
+# Display chat messages from session state
 for message in st.session_state.messages:
     with st.chat_message(message["role"]):
         st.markdown(message["content"])
 
-# Aceitar entrada do usuário
-if prompt := st.chat_input("Digite uma mensagem para o assistente:"):
-    # Adicionar a mensagem do usuário ao histórico
+# Accept user input
+if prompt := st.chat_input("Digite uma mensagem:"):
+    # Display user message in chat
     st.session_state.messages.append({"role": "user", "content": prompt})
     with st.chat_message("user"):
         st.markdown(prompt)
 
-    # Enviar solicitação para a API do Langflow
+    # Enviar a solicitação para a API atualizada do Langflow
     try:
         headers = {
             "Content-Type": "application/json",
-            "Authorization": f"Bearer {API_TOKEN}"
+            "Authorization": f"Bearer {token}"
         }
-        # Atualizar o valor do input no JSON carregado
-        API_DATA["input_value"] = prompt
 
-        response = requests.post(API_URL, headers=headers, json=API_DATA)
+        # Atualizar o valor do input_value no data_template
+        data_template["input_value"] = prompt
+
+        response = requests.post(
+            api_url,
+            headers=headers,
+            json=data_template
+        )
+
         response_data = response.json()
 
-        # Extrair a resposta do assistente
-        assistant_message = response_data["outputs"][0]["outputs"][0]["results"]["message"]["text"]
+        # Extract the assistant's response
+        assistant_message = response_data["outputs"][0]["outputs"][0]["results"]["message"]["data"]["text"]
 
-        # Exibir mensagem do assistente no chat
+        # Display assistant message in chat
         with st.chat_message("assistant"):
             st.markdown(assistant_message)
 
-        # Adicionar mensagem do assistente ao histórico de conversas
+        # Add assistant message to chat history
         st.session_state.messages.append({"role": "assistant", "content": assistant_message})
 
     except Exception as e:
-        st.error(f"Erro ao consultar a API: {e}")
+        st.error(f"Erro: {e}")
