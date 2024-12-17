@@ -12,6 +12,39 @@ assistant_message = st.secrets["WELCOME_MESSAGE"]
 # Validação das variáveis
 if not data_env or not api_url or not token or not agent_title or not agent_description:
     st.error("Erro: Uma ou mais variáveis de ambiente necessárias não foram encontradas.")
+    st.markdown("""
+    Para corrigir esse erro, configure as variáveis de ambiente seguindo os passos abaixo:
+
+    1. **Acesse My Apps**.
+    2. Selecione o aplicativo desejado.
+    3. Clique no ícone de três pontos (⋮) ao lado do app.
+    4. Vá para **Configurações**.
+    5. Adicione as variáveis necessárias na seção **Secrets**, preenchendo com os dados do seu LangFlow:
+
+    **Variáveis necessárias:**
+
+    ```plaintext
+    # Título do agente
+    AI_AGENT_TITLE = "Meu agente de IA no Langflow"
+
+    # Descrição do agente
+    AI_AGENT_DESCRIPTION = "Este é um exemplo de descrição de agente desenvolvido no LangFlow. Siga as instruções abaixo para integrar sua API do Langflow ao Streamlit."
+
+    # Mensagem de boas-vindas
+    WELCOME_MESSAGE = "Olá! Como posso te ajudar hoje?"
+
+    # URL da API do LangFlow
+    LANGFLOW_API_URL = "<URL_API>"
+
+    # Token da API do LangFlow
+    LANGFLOW_API_TOKEN = "<API_TOKEN>"
+
+    # Dados do agente em formato JSON
+    LANGFLOW_API_DATA = '{"input_value": "", "output_type": "chat", "input_type": "chat"}'
+    ```
+
+    **Preencha `<URL_API>` e `<API_TOKEN>` com as informações correspondentes ao seu LangFlow.**
+    """)
     st.stop()
 
 data_template = eval(data_env)  # Converte o JSON armazenado na variável para um dicionário Python
