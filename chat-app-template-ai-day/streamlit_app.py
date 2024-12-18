@@ -1,53 +1,62 @@
 import streamlit as st
 import requests
+import os
 
-# Carregar variáveis do Streamlit Secrets
-data_env = st.secrets["LANGFLOW_API_DATA"]
-api_url = st.secrets["LANGFLOW_API_URL"]
-token = st.secrets["LANGFLOW_API_TOKEN"]
-agent_title = st.secrets["AI_AGENT_TITLE"]
-agent_description = st.secrets["AI_AGENT_DESCRIPTION"]
-assistant_message = st.secrets["WELCOME_MESSAGE"]
-
-# Validação das variáveis
-if not data_env or not api_url or not token or not agent_title or not agent_description:
-    st.error("Erro: Uma ou mais variáveis de ambiente necessárias não foram encontradas.")
+# Verifica se o arquivo secrets.toml existe e lida com a ausência de forma amigável
+try:
+    data_env = st.secrets.get("LANGFLOW_API_DATA")
+    api_url = st.secrets.get("LANGFLOW_API_URL")
+    token = st.secrets.get("LANGFLOW_API_TOKEN")
+    agent_title = st.secrets.get("AI_AGENT_TITLE")
+    agent_description = st.secrets.get("AI_AGENT_DESCRIPTION")
+    assistant_message = st.secrets.get("WELCOME_MESSAGE", "Olá! Como posso te ajudar hoje?")
+except FileNotFoundError:
+    st.warning("**Arquivo de configurações ausente!**")
     st.markdown("""
-    Para corrigir esse erro, configure as variáveis de ambiente seguindo os passos abaixo:
+    Parece que você ainda não configurou o arquivo `secrets.toml` no diretório `.streamlit`. 
+    Para corrigir este problema, siga as etapas abaixo:
 
-    1. **Acesse My Apps**.
-    2. Selecione o aplicativo desejado.
-    3. Clique no ícone de três pontos (⋮) ao lado do app.
-    4. Vá para **Configurações**.
-    5. Adicione as variáveis necessárias na seção **Secrets**, preenchendo com os dados do seu LangFlow:
+    1. **Crie o diretório `.streamlit`** (caso não exista):
+        ```bash
+        mkdir .streamlit
+        ```
 
-    **Variáveis necessárias:**
+    2. **Adicione o arquivo `secrets.toml`** dentro da pasta `.streamlit` com o seguinte conteúdo:
 
-    ```plaintext
-    # Título do agente
-    AI_AGENT_TITLE = "Meu agente de IA no Langflow"
+        ```toml
+        LANGFLOW_API_DATA = '{"input_value": "", "output_type": "chat", "input_type": "chat"}'
+        LANGFLOW_API_URL = "<URL_API>"
+        LANGFLOW_API_TOKEN = "<API_TOKEN>"
+        AI_AGENT_TITLE = "Meu agente de IA no Langflow"
+        AI_AGENT_DESCRIPTION = "Este é um exemplo de descrição de agente desenvolvido no LangFlow."
+        WELCOME_MESSAGE = "Olá! Como posso te ajudar hoje?"
+        ```
 
-    # Descrição do agente
-    AI_AGENT_DESCRIPTION = "Este é um exemplo de descrição de agente desenvolvido no LangFlow. Siga as instruções abaixo para integrar sua API do Langflow ao Streamlit."
-
-    # Mensagem de boas-vindas
-    WELCOME_MESSAGE = "Olá! Como posso te ajudar hoje?"
-
-    # URL da API do LangFlow
-    LANGFLOW_API_URL = "<URL_API>"
-
-    # Token da API do LangFlow
-    LANGFLOW_API_TOKEN = "<API_TOKEN>"
-
-    # Dados do agente em formato JSON
-    LANGFLOW_API_DATA = '{"input_value": "", "output_type": "chat", "input_type": "chat"}'
-    ```
-
-    **Preencha `<URL_API>` e `<API_TOKEN>` com as informações correspondentes ao seu LangFlow.**
+    3. **Substitua `<URL_API>` e `<API_TOKEN>`** com suas credenciais corretas.
     """)
     st.stop()
 
-data_template = eval(data_env)  # Converte o JSON armazenado na variável para um dicionário Python
+# Validação das variáveis
+missing_variables = [
+    var_name for var_name, var_value in [
+        ("LANGFLOW_API_DATA", data_env),
+        ("LANGFLOW_API_URL", api_url),
+        ("LANGFLOW_API_TOKEN", token),
+        ("AI_AGENT_TITLE", agent_title),
+        ("AI_AGENT_DESCRIPTION", agent_description)
+    ] if var_value is None
+]
+
+if missing_variables:
+    st.error(f"Erro: As seguintes variáveis de ambiente estão ausentes no arquivo TOML: {', '.join(missing_variables)}")
+    st.stop()
+
+# Conversão de JSON
+try:
+    data_template = eval(data_env)  # Converte o JSON armazenado na variável para um dicionário Python
+except Exception as e:
+    st.error(f"Erro ao converter LANGFLOW_API_DATA para JSON: {e}")
+    st.stop()
 
 # Interface do Streamlit
 st.title(agent_title)
@@ -86,8 +95,11 @@ if prompt := st.chat_input("Digite uma mensagem:"):
 
         response_data = response.json()
 
-        # Extrai a resposta do assistente
-        assistant_message = response_data["outputs"][0]["outputs"][0]["results"]["message"]["data"]["text"]
+        # Ajuste na extração da resposta do assistente
+        if "outputs" in response_data and len(response_data["outputs"]) > 0:
+            assistant_message = response_data["outputs"][0]["outputs"][0]["results"]["message"]["text"]
+        else:
+            assistant_message = "Desculpe, não consegui entender a resposta da API."
 
         # Exibe resposta do assistente
         with st.chat_message("assistant"):
@@ -96,4 +108,4 @@ if prompt := st.chat_input("Digite uma mensagem:"):
         st.session_state.messages.append({"role": "assistant", "content": assistant_message})
 
     except Exception as e:
-        st.error(f"Erro: {e}")
+        st.error(f"Erro ao consultar a API: {e}")
